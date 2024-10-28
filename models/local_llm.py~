@@ -1,0 +1,43 @@
+import logging
+from typing import List, Dict, Any
+from llama_cpp import Llama
+
+class ЛокальнаяНейроСеть:
+    def __init__(self, путь_к_модели: str = "models/llm/mistral-7b-v0.1.Q4_K_M.gguf"):
+        self.журнал = logging.getLogger('ЛокальнаяНейроСеть')
+        try:
+            self.модель = Llama(
+                model_path=путь_к_модели,
+                n_ctx=2048,
+                n_batch=512,
+                n_gpu_layers=-1,  # Это заставит использовать GPU для всех слоев
+                verbose=True  # Добавим это для получения дополнительной информации
+            )
+            self.журнал.info(f"Мур-мур, модель Mistral 7B успешно загружена из {путь_к_модели} с использованием GPU")
+        except Exception as e:
+            self.журнал.error(f"Мяу! Не удалось загрузить модель Mistral 7B: {e}")
+            raise
+
+    def generate(self, prompt: str, max_tokens: int = 100) -> str:
+        try:
+            output = self.model(prompt, max_tokens=max_tokens)
+            return output['choices'][0]['text']
+        except Exception as e:
+            self.logger.error(f"Error during text generation: {e}")
+            return ""
+
+    def get_embeddings(self, text: str) -> List[float]:
+        try:
+            embedding = self.model.embed(text)
+            return embedding.tolist()
+        except Exception as e:
+            self.logger.error(f"Error during embedding generation: {e}")
+            return []
+
+    def get_model_info(self) -> Dict[str, Any]:
+        return {
+            "model_path": self.model.model_path,
+            "n_ctx": self.model.n_ctx,
+            "n_parts": self.model.n_parts,
+            "n_vocab": self.model.n_vocab,
+        }
